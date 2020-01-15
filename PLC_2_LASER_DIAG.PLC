@@ -1,0 +1,42 @@
+#include  <header.h>
+
+OPEN PLC 2 CLEAR
+	; 01/23/13 Changed Laser FLAG 0 CM
+	; 01/30/13 Changed Timer1 to Timer 2 to avoide confilcts
+
+	P_LASER_SHOT_FLAG =0
+
+	
+	disable plcc0
+	i3259=0 ; Turn off open servo
+	TraveledDistance=0 ; ensure travel distance is 0
+	LASER_PULSE_State=1 LASER_PULSE_WRITE_ENA=1 LASER_ON = 1 ; turn on equ 31 (laaser pulse)
+	IF (PLC_Laser_Control_Flag=1)
+		Final_DesiredDutyCycle=MB_Laser_Pulse_Power_INT
+		Final_LASER_ON_DURATION=MB_Laser_Pulse_Duration_INT
+	ELSE
+		Final_DesiredDutyCycle=DesiredDutyCycle
+		Final_LASER_ON_DURATION=LASER_ON_DURATION
+	ENDIF
+	
+	PWMOutput = ((Final_DesiredDutyCycle/50-1)*I6800)
+	
+	I_CS1_TIMER2 = Final_LASER_ON_DURATION * CON_MSEC
+	WHILE(I_CS1_TIMER2>0)
+	ENDWHILE
+	
+	LASER_ON == 0
+	PWMOutput == (0/50-1)*I6800
+
+	I_CS1_TIMER2 = 1000 * CON_MSEC
+	WHILE( I_CS1_TIMER2 >0)
+	ENDWHILE
+
+	LASER_PULSE_State=0 LASER_PULSE_WRITE_ENA=1  ; LASER_ON = 1 turn on equ 31 (laaser pulse)
+
+	enable plcc0
+	P_LASER_SHOT_FLAG =1
+	  
+	DISPLC2 ;DELPHI-manual laser control-commented out
+CLOSE
+

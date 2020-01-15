@@ -1,0 +1,118 @@
+#include <header.h>
+
+
+OPEN PLC 14 CLEAR
+
+	;Collection of Motor Staus Bits for DPRAM
+	
+	Motor1_Status = P_MOTOR1_HOME_STATUS + Motor1_LimitFault * 2 + Motor1_FollowWarn * 4 + Motor1_FollowError * 8 + Motor1_AmpFault *16 +Motor1_Positive_Limit*32 + Motor1_Neg_Limit*64 ; Pack Status Bits into Word
+	DPR_Motor1_Status=Motor1_Status ; Pass PMAC word to DPRAM WORD
+	Motor2_Status = P_MOTOR2_HOME_STATUS + Motor2_LimitFault * 2 + Motor2_FollowWarn * 4 + Motor2_FollowError * 8 + Motor2_AmpFault *16 +Motor2_Positive_Limit*32 + Motor2_Neg_Limit*64; Pack Status Bits into Word
+	DPR_Motor2_Status=Motor2_Status ; Pass PMAC word to DPRAM WORD
+	Motor3_Status = P_MOTOR3_HOME_STATUS + Motor3_LimitFault * 2 + Motor3_FollowWarn * 4 + Motor3_FollowError * 8 + Motor3_AmpFault *16 +Motor3_Positive_Limit*32 + Motor3_Neg_Limit*64; Pack Status Bits into Word
+	DPR_Motor3_Status=Motor3_Status ; Pass PMAC word to DPRAM WORD
+	Motor4_Status = P_MOTOR4_HOME_STATUS + Motor4_LimitFault * 2 + Motor4_FollowWarn * 4 + Motor4_FollowError * 8 + Motor4_AmpFault *16 +Motor4_Positive_Limit*32 + Motor4_Neg_Limit*64; Pack Status Bits into Word
+	DPR_Motor4_Status=Motor4_Status ; Pass PMAC word to DPRAM WORD
+	
+	#define Motor1_Positive_Limit M131
+#define Motor1_Neg_Limit M132
+	; Collection of Output bit for DPRAM
+	
+	DPR_Outputs = Prog_Running + Prog_RunFault * 2 + P_HOMING_ROUTINE_COMPLETE * 4 + ESTOP_Button * 8 + Door_Open *16 + Job_Complete * 32 + P_HANDHELD_STOP_LATCH * 64 + P_HANDHELD_RUN_LATCH * 128 + P_HANDHELD_F1_LATCH *256 + P_HANDHELD_ENTER_LATCH * 512 
+	DPR_DPR_Outputs = DPR_Outputs ; Pass PMAC word to DPRAM WORD
+	
+	
+	
+	;P80= HANDHELD_STOP_BUTTON + P_HANDHELD_STOP_LATCH * 2 + HANDHELD_RUN_BUTTON *4 + HANDHELD_RUN_BUTTON + SAVE_ENTER_BUTTON * 8 + F1_BUTTON *16 ; Put Handheld buttons into p80
+	;I/O, each 16-bit
+	M64=M49
+	M65=M59
+
+	;Motor1..8, 16-bit
+	;xx20 Home Switch
+	;xx21 PLIM Switch
+	;xx22 MLIM Switch
+	;xx41 Warning Following error
+	;DPR_1_4_Limit_Pword= HMFL1_flag + PLIM1_flag *2 + MLIM1_flag *4 + M_MOTOR1_WARNING_FOLLOWING * 8 + HMFL2_flag + PLIM2_flag *16 + MLIM2_flag *32 + M_MOTOR2_WARNING_FOLLOWING * 64 
+;	DPR_1_4_Limit_Pword= HMFL3_flag + PLIM3_flag *128 + MLIM3_flag *256 + M_MOTOR3_WARNING_FOLLOWING * 512 + HMFL4_flag + PLIM4_flag *1024 + MLIM4_flag *2048 + M_MOTOR4_WARNING_FOLLOWING * 4096
+;	DPR_1_4_Limits=DPR_1_4_Limit_Pword
+;	DPR_5_8_Limit_Pword= HMFL5_flag + PLIM5_flag *2 + MLIM5_flag *4 + M_MOTOR5_WARNING_FOLLOWING * 8 + HMFL6_flag + PLIM6_flag *16 + MLIM6_flag *32 + M_MOTOR6_WARNING_FOLLOWING * 64 
+;	DPR_5_8_Limit_Pword= HMFL7_flag + PLIM7_flag *128 + MLIM7_flag *256 + M_MOTOR7_WARNING_FOLLOWING * 512 + HMFL8_flag + PLIM8_flag *1024 + MLIM8_flag *2048 + M_MOTOR8_WARNING_FOLLOWING * 4096
+;	DPR_5_8_Limits=DPR_5_8_Limit_Pword
+M66=M120  
+M67=M121 
+M68=M122
+M69=M141
+
+M74=M220
+	M75=M221
+	M76=M222
+	M77=M241
+
+	M78=M320
+	M79=M321
+	M87=M322
+	M88=M341
+
+	M89=M420
+	M113=M421
+	M129=M422
+	M134=M441
+
+
+;M136=M520
+	M152=M521
+	M165=M522
+	M180=M541
+
+	M181=M620
+	M182=M621
+	M183=M622
+	M184=M641
+
+	M185=M720
+	M186=M721
+	M187=M722
+	M188=M741
+
+	M189=M820
+	M190=M821
+	M195=M822
+	M196=M841
+
+
+
+	;Motor1..8 (In Motion), 16-bit
+	;xx33 Desired Velocity Zero
+	M197=M133
+	M198=M233
+	M199=M333
+	M280=M433
+	M281=M533
+	M282=M633
+	M283=M733
+	M284=M833
+	;More I/O
+	M285=M115
+	M286=M215
+	M287=M315
+	M288=M415
+
+	;xx01 Encoder Count, each 24-bit in a 32-bit register
+	M289=M162
+	M290=M262
+	M295=M362
+	M296=M462
+	M297=M562
+	M298=M662
+	M299=M762
+	M300=M862
+	
+
+
+CLOSE
+
+
+;ENABLE PLC14
+
+

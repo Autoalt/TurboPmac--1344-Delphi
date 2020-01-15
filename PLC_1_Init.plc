@@ -1,0 +1,97 @@
+#include <header.h>
+#include <io_header.h>
+#include <Machine_Config.plc>
+
+OPEN PLC 1 CLEAR
+
+I122 = P_MOTOR1_JOG_SPEED 
+I222 = P_MOTOR2_JOG_SPEED 
+I322 = P_MOTOR3_JOG_SPEED 
+I422 = P_MOTOR4_JOG_SPEED 
+I5=3
+I13=1
+;DPRAM Enabling
+I45=1	; Foreground Bin. Rot. Buf Transfer Enable
+I47=20	; DPRAM Motor Data Reporting Perioid
+
+I48=1	; DPRAM Motor Data Reporting Enable
+I_MOTOR_4_FLAG_CONTROL = P_MOTOR_4_FLAG_CONTROL_ENABLE; KILL ALL MOTORS ON ESTOP (AMP4 FAULT)
+DISABLE PLC 2..31
+P_HANDHELD_STOP_LATCH = 0 ;Clear Latch
+P_HANDHELD_RUN_LATCH = 0 ;Clear Latch
+P_HANDHELD_F1_LATCH = 0 ;Clear Latch
+P_HANDHELD_ENTER_LATCH = 0 ;Clear Latch
+MB_STATUS_LaserReady=0 ; Set Laser not Ready
+PLC_Jog_Control_Flag=0
+M32=255		; Direction control for I/O00 to I/O07
+M33=1		; Buffer direction control for I/O00 to I/O07
+M60=255		; Direction control for DAT0 to DAT7
+M61=1		; Buffer direction control for DAT0 to DAT7, PCbus
+M62=0		; Direction control for SEL0 to SEL7
+LASER_ON = 0		;Make sure Laser bit is OFF
+PWMOutput = -I6800	;Make sure Laser is OFF
+I6800=9000	      ;Delphi - change to 9000 for tickle pulse,Set Max PWM,
+I5120=100	      ; look ahead length
+I5113=5		 ;look ahead segmentation
+
+;setup for laser pulsing
+
+; Setup for Virtual Motor that drives the pulses
+
+I8004=$78418 ; Simulated Step-and-Direction Feedback
+I8005=$2810F4 ; Parallel Y-Word read, output of open servo or "traveled distance"
+I8006=$018000 ; 24 bits read
+I8007=$EC0006 ; integrate Entry 6 or traveled distance
+
+
+M3100=65503 ; Set Dat 5 (Bit 5=0)as internal EQU2 output instead of regular output
+i3100=1 ; Activating Step-and-Direction Virtual Motor
+i3102=$7841C ; Assigning the output to 2nd Supplemental phase C-output
+i3124=$130001 ; Disabling Over-travel, Amp Fault and Amp Enable
+i6826=3 ; Setting the output mode to PFM for 2nd Supplemental Phase C channel
+i6820=8 ; Encoder Decode to Simulated Step-and-Direction
+i3103=$3505 ; Position Feedback from ECT on Simulated Feedback Entry
+i3104=$3505 ; Velocity Feedback from ECT on Simulated Feedback Entry
+i3111=0    ; disable fatal following error
+i3130=1050 ; Tuning Gains for simulated step-and-direction motor at 2.25kHz servo
+i3131=0
+i3132=10025
+i3133=0
+i3134=1
+i3135=11300
+i3105=$3508 ; Set integrated traveled distance as master position for virtual Step-and-Direction motor
+i3106=1 ; master in offset mode
+
+
+;Setup for Virtual motor that Runs Open Servo
+i3200=1 ; Virtual motor for runnig the open servo
+i3224=$130001 ; Disabling Over-travel, Amp Fault and Amp Enable
+i3259=1 ; Enabling Open Servo for Motor 32
+M3108=M3101+25
+M3109=M3101-25
+M3110=100
+cmd"#32j/#31j/"
+
+P_HOMING_ROUTINE_COMPLETE=0
+P_MOTOR1_HOME_STATUS = 1
+P_MOTOR2_HOME_STATUS = 1
+P_MOTOR3_HOME_STATUS = 1
+
+I_CS1_TIMER12  = 2000 * CON_MSEC ;wait for motors to power up
+	WHILE(I_CS1_TIMER12 >0) ;
+	ENDWHILE
+P59=0	  	;This bit is to check motor status
+ENABLE PLC7	;PLC to check motor status
+ENABLE PLC4	;E stop PLC
+ENABLE PLC3	;handheld PLC
+ENABLE PLC14; DPRAM 
+ENABLE PLC8 ; enable the beacon PLC
+ENABLE PLC20 ;DELPHI -  Modbus Comm Check PLC
+IF (ESTOP_Button=1)
+ENABLE PLC12 ; home machine on power up
+ENDIF
+
+enable plcc0
+DISABLE PLC 1
+
+CLOSE

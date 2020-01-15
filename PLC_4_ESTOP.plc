@@ -1,0 +1,25 @@
+#include <header.h>
+
+
+OPEN PLC 4 CLEAR
+
+
+IF (ESTOP_Button = 0) ; if estop is pressed
+
+CMD"\" ;stop motion
+cmd"#1k #2k #3k" ;kill motors
+
+LASER_ON=0 LASER_ON_OFF_AMBER_LIGHT=0 AIR_ASSIST_SIDE_EDGE=0
+PWMOutput=-I6800 ;M54=0 ;turn off laser
+displc5 ; disable jogging plc
+DISABLE PLC12 ; disable homing plc
+DISABLE PLCC0 ; turn off pwm calculation
+ENDIF
+
+IF (ESTOP_Button = 1 AND Motor4_AmpEnable_Bit = 0) ; if estop is off and motor amp is not energized, energize
+	COMMAND"#1j/#2j/#4J/#31j/#32j/"
+	
+ENDIF
+
+CLOSE
+

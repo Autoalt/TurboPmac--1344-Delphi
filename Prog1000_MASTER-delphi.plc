@@ -1,0 +1,64 @@
+#include "header.h"
+#include<header.h>
+;Merged 1-15-2020
+
+OPEN PROG 1000 CLEAR
+ABSABS(R)
+FRAX(X,Y)
+LaserRadius=-MB_CMD_LaserRadius/1000 ;check beam offset from plc
+		IF(LaserRadius!=0)
+		CCR(LaserRadius)	;Set Radius Parameter
+			CC1		;Cutter Comp Left (outside clockwise circle)
+		ELSE
+		CC0		;Disable Cutter Radius Comp
+		ENDIF
+
+IF(MB_CMD_PartNumber=3)
+;Set Offset for Hole 2 (Tower)
+OffsetX=M3310+(M3311/10000)
+OffsetY=M3312+(M3313/10000)
+OffsetZ=M3314+(M3315/10000)
+ELSE
+;Set Offsets For Hole 1 (Primary)
+OffsetX=MB_CMD_X_Int +(MB_CMD_X_Decimal/10000)
+OffsetY=MB_CMD_Y_Int +(MB_CMD_Y_Decimal/10000)
+OffsetZ=MB_CMD_Z_Int +(MB_CMD_Z_Decimal/10000)
+END IF
+
+;Enable transformation matrices
+TSELECT1
+TINIT
+
+;Q40 is the start of the rotational transformation matrix.
+			;PMAC uses 9 Q variables to calculate the rotation matrix in XYZ space.
+			Q40=cos(0)
+			Q41=sin(0)
+			Q42=0
+			Q43=-sin(0)
+			Q44=cos(0)
+			Q45=0
+			Q46=0
+			Q47=0
+			Q48=1
+
+
+
+;Q50 is once again the start of the absolute displacement matrix.
+			;This time, we are setting the XYZ offsets
+			Q50=OffsetX	
+			Q51=OffsetY	
+			Q52=OffsetZ
+
+;ABSOLUTE DISPLACEMENT MATRIX starting at Q50
+ADISPLACE50
+
+;Start Laser Drill Program
+CALL(MB_CMD_PartNumber)
+DWELL20
+WHILE(P60=1)
+P603=2
+END WHILE
+
+
+
+CLOSE

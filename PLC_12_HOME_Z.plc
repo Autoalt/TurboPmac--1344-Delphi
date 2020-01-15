@@ -1,0 +1,243 @@
+#include<header.h>
+#include <io_header.h>
+
+OPEN PLC 12 CLEAR
+  DISABLE PLC7 ; Disable Error Checking PLC
+  DISABLE PLCC0 ; Disable Laser Calculations
+  disable plc10
+  ;Clear  Status
+  
+	P_HOMING_ROUTINE_COMPLETE=0
+	P_MOTOR4_HOME_STATUS = 1
+	P_MOTOR1_HOME_STATUS = 1
+	P_MOTOR2_HOME_STATUS = 1
+  MB_STATUS_LaserReady=0 ; Set Laser not Ready
+  MB_STATUS_ErrorFlag=0 
+  MB_Motor1HomeFault=0
+  MB_Motor2HomeFault=0
+  MB_Motor3HomeFault=0
+  MB_Motor4HomeFault=0
+  MB_Motor1Fault=0
+  MB_Motor2Fault=0
+  MB_Motor3Fault=0
+  MB_Motor4Fault=0
+  MB_LaserFault = 0
+  MB_JobLoadingError=0
+	LASER_ON = 0 ; turn off laser
+
+  cmd"&1a" ; abort motion program if running
+	I_MOTOR_1_SOFT_MLIM = 0			
+	I_MOTOR_2_SOFT_MLIM = 0	
+    I_MOTOR_1_SOFT_PLIM = 0
+    I_MOTOR_2_SOFT_PLIM = 0 
+    I_MOTOR_4_SOFT_PLIM = 0
+	I_MOTOR_4_SOFT_MLIM = 0
+    I_MOTOR_1_FLAG_CONTROL = P_MOTOR_1_FLAG_CONTROL_DISABLE
+	I_MOTOR_2_FLAG_CONTROL = P_MOTOR_2_FLAG_CONTROL_DISABLE
+	I_MOTOR_4_FLAG_CONTROL=  P_MOTOR_4_FLAG_CONTROL_DISABLE 
+	I_MOTOR_4_HOME_OFFSET = P_MOTOR4_HOME_OFFSET
+	I_MOTOR_1_HOME_OFFSET = P_MOTOR1_HOME_OFFSET	
+	I_MOTOR_2_HOME_OFFSET = P_MOTOR2_HOME_OFFSET
+	;Set Home TA TS 
+	
+	I420=100 ;Motor 4 HOME TA
+	I421=50  ;Motor 4 HOME TS
+	I120=100	;Motor 1 HOME TA
+	I121=50		;Motor 1 HOME TS
+	I220=100	;Motor 2 HOME TA
+	I221=50	;Motor 2 HOME TS
+
+;Set Up Flag Capture
+
+	I7043=2 ; use mlim4 as home switch
+	I7013=2	;use mlim1 as home switch
+	I7023=2	;use mlim2 as home switch
+	
+
+
+;POWER UP MOTORs	
+CMD "#1j/#2j/#4J/" 
+P3333=1
+;Timeout for Homing of Motor 4 
+I_CS1_TIMER20  = 8 * CON_SEC ;wait for motors to power up
+WHILE(I_CS1_TIMER20 >0) ;
+					
+	;Home Motor 4 First
+	IF (MLIM4_flag=1); already at home?
+			I_MOTOR_4_HOME_SPEED = P_MOTOR_4_HOME_SPEED 
+			I7042 = 10 ; look for falling edge
+			COMMAND"#4HM" ;home out of switch
+			I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+				WHILE(I_CS1_TIMER12 >0)
+				ENDWHILE
+				WHILE (M_MOTOR4_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+				ENDWHILE
+			ELSE ; not in home?
+				I_MOTOR_4_HOME_SPEED = - P_MOTOR_4_HOME_SPEED ;homing speed and direction
+				I7042=2 ;look for rising edge
+				COMMAND"#4HM"	
+				I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+					WHILE(I_CS1_TIMER12 >0) ;
+					ENDWHILE
+					WHILE (M_MOTOR4_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+					I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+					WHILE(I_CS1_TIMER12>0) ;
+					ENDWHILE
+					ENDWHILE
+	ENDIF
+	P3333=2
+	;Final Home			
+	I_MOTOR_4_HOME_SPEED = - 4 ;homing speed and direction
+	I7042=2 ;look for rising edge
+	COMMAND"#4HM"	
+	I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+		WHILE(I_CS1_TIMER12 >0) ;
+		ENDWHILE
+		WHILE (M_MOTOR4_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+		I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+			WHILE(I_CS1_TIMER12>0) ;
+		ENDWHILE
+		ENDWHILE
+		P_MOTOR4_HOME_STATUS=0 ; set home 4 to true
+		I_CS1_TIMER20 = 0 ; Reset Timer if HOMED
+ENDWHILE
+;Check that Motor 4 Homed if no then set Error
+IF (P_MOTOR4_HOME_STATUS=1)
+  MB_Motor4HomeFault=1
+  MB_STATUS_ErrorFlag=1
+ENDIF
+P3333=3
+
+IF (MB_Motor4HomeFault=0) ; If no Error on Motor 4 Home motor 1
+  ;Timeout for Homing of Motor 2 
+		
+	;Home Motor 1 
+	
+		IF (MLIM1_flag=1); already at home?
+			I_MOTOR_1_HOME_SPEED =  P_MOTOR_1_HOME_SPEED 
+			I7012 = 10 ; look for falling edge
+			COMMAND"#1HM" ;home out of switch
+			I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+				WHILE(I_CS1_TIMER12 >0)
+				ENDWHILE
+				WHILE (M_MOTOR1_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+				ENDWHILE
+			ELSE ; not in home?
+				I_MOTOR_1_HOME_SPEED =  -P_MOTOR_1_HOME_SPEED ;homing speed and direction
+				I7012=2 ;look for rising edge
+				COMMAND"#1HM"	
+				p3333=3.5
+				I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+					WHILE(I_CS1_TIMER12 >0) ;
+					ENDWHILE
+					WHILE (M_MOTOR1_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+						I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+					WHILE(I_CS1_TIMER12 >0) ;
+					ENDWHILE
+					ENDWHILE
+					
+		ENDIF
+		P3333=4
+;Final Home	
+				
+		I_MOTOR_1_HOME_SPEED =  - 1 ;homing speed and direction
+		I7012=2 ;look for rising edge
+		COMMAND"#1HM"	
+		P333=4.5
+		I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+			WHILE(I_CS1_TIMER12 >0) ;
+			ENDWHILE
+			WHILE (M_MOTOR1_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+			I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+			WHILE(I_CS1_TIMER12>0) ;
+			ENDWHILE
+			ENDWHILE
+			P_MOTOR1_HOME_STATUS=0
+			I_CS1_TIMER20 = 0 ; Reset Timer if HOMED
+
+;Check that Motor 1 Homed if not then set Error
+IF (P_MOTOR1_HOME_STATUS=1)
+  MB_Motor1HomeFault=1
+  MB_STATUS_ErrorFlag=1
+ENDIF
+ENDIF 
+P3333=5
+IF (MB_Motor1HomeFault=0)OR(MB_Motor4HomeFault=0) ; If no Error on Motor 1 or Motor4 Home motor 3
+  
+  
+  ;Timeout for Homing of Motor 3 
+	I_CS1_TIMER20  = 8 * CON_SEC ;wait for motors to power up
+	WHILE(I_CS1_TIMER20 >0) ;
+	
+	
+	;Home Motor 2 Third
+
+		IF (MLIM2_flag=1); already at home?
+			I_MOTOR_2_HOME_SPEED = P_MOTOR_2_HOME_SPEED 
+			I7022 = 10 ; look for falling edge
+			COMMAND"#2HM" ;home out of switch
+			I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+				WHILE(I_CS1_TIMER12 >0)
+				ENDWHILE
+				WHILE (M_MOTOR2_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+				ENDWHILE
+			ELSE ; not in home?
+				I_MOTOR_2_HOME_SPEED = - P_MOTOR_2_HOME_SPEED ;homing speed and direction
+				I7022=2 ;look for rising edge
+				COMMAND"#2HM"	
+				I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+					WHILE(I_CS1_TIMER12 >0) ;
+					ENDWHILE
+					WHILE (M_MOTOR2_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+					I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+					WHILE(I_CS1_TIMER12>0) ;
+					ENDWHILE
+					ENDWHILE
+		ENDIF
+		P3333=6
+;Final Home	
+
+I_MOTOR_2_HOME_SPEED =  -1 ;homing speed and direction
+I7022=2 ;look for rising edge
+COMMAND"#2HM"	
+I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+	WHILE(I_CS1_TIMER12 >0) ;
+	ENDWHILE
+	WHILE (M_MOTOR2_DESIRED_VEL_ZERO = 0) ; Waits for Home motion to complete
+	I_CS1_TIMER12  = 20 * CON_MSEC ;wait for motors to power up
+	WHILE(I_CS1_TIMER12>0) ;
+	ENDWHILE
+	ENDWHILE
+	P_MOTOR2_HOME_STATUS=0
+	I_CS1_TIMER20 = 0 ; Reset Timer if HOMED
+		
+ENDWHILE	
+P3333=8
+IF (P_MOTOR2_HOME_STATUS=1)
+  MB_Motor2HomeFault=1
+  MB_STATUS_ErrorFlag=1
+ENDIF
+ENDIF
+	
+	;Set Home Complete bits
+	P_HOMING_ROUTINE_COMPLETE=1
+
+	; Set Soft Limits and activate Flags
+	I_MOTOR_1_FLAG_CONTROL = P_MOTOR_1_FLAG_CONTROL_ENABLE
+	I_MOTOR_2_FLAG_CONTROL = P_MOTOR_2_FLAG_CONTROL_ENABLE
+	I_MOTOR_4_FLAG_CONTROL = P_MOTOR_4_FLAG_CONTROL_ENABLE
+	
+	I_MOTOR_1_SOFT_MLIM = P_MOTOR_1_SOFT_MLIM 	
+	I_MOTOR_2_SOFT_MLIM = P_MOTOR_2_SOFT_MLIM	
+  I_MOTOR_1_SOFT_PLIM = P_MOTOR_1_SOFT_PLIM 
+  I_MOTOR_2_SOFT_PLIM = P_MOTOR_2_SOFT_PLIM 
+  I_MOTOR_4_SOFT_PLIM = P_MOTOR_4_SOFT_PLIM
+	I_MOTOR_4_SOFT_MLIM = P_MOTOR_4_SOFT_MLIM
+	MB_STATUS_LaserReady=1
+ 
+ENABLE PLC10 ; Enable Modbus Comms to PLC
+ENABLE PLC7 ; Enable Error Handling
+ENABLE PLCC0 ;ENABLE Laser Calculations
+DISABLE PLC12
+CLOSE
+

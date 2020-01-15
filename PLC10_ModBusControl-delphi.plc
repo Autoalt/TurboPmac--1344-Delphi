@@ -1,0 +1,55 @@
+CLOSE
+
+
+#include "header.h"
+OPEN PLC10 CLEAR
+P999=0
+
+ 		
+	P600=1 ; Reset Step  Counter
+  MB_STATUS_HomeComplete=0
+	MB_STATUS_TaskDone=0 ;Clear Control Bits
+;
+
+	
+WHILE(MB_CMD_StartMark = 0)	;Received Start Homing command from ModBus
+ENDWHILE 
+P600=2  
+JobLoadingError=1
+		
+
+
+			;Start Program 
+		
+			CMD "&1B1000R" ; Run Master Program 	
+				I_CS1_TIMER10  = 30 * CON_MSEC ;wait for motors to power up
+				WHILE(I_CS1_TIMER10 >0)
+				ENDWHILE
+				
+				;Wait for Motion Program to Complete
+				While (Prog_Running=1)
+			  P600=8
+				EndW
+			
+				
+					
+				P600=9
+				IF(JobLoadingError=1) ; Check to see if Job loaded
+				MB_STATUS_LaserBusy=0
+				MB_STATUS_ErrorFlag=1
+				MB_JobLoadingError=1
+				ELSE
+				MB_STATUS_LaserBusy=0
+				MB_STATUS_ErrorFlag=0
+				MB_JobLoadingError=0
+				ENDIF
+		 
+	 	  		MB_STATUS_TaskDone=1
+			 	I_CS1_TIMER10  = 300 * CON_MSEC ;wait for motors to power up
+				WHILE(I_CS1_TIMER10 >0)
+				ENDWHILE
+		
+			
+				
+MB_STATUS_LaserReady=1
+CLOSE

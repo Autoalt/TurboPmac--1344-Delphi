@@ -1,0 +1,45 @@
+#include <header.h>
+
+
+#define ServoIntTime I10 ; Period for servo interrupt
+#define VecCmdVel P60 ; Commanded vector velocity
+#define Override P61 ; 1.0 is real-time (%100)
+#define ScaleFactor P62 ; Combined conversion factors
+
+
+I5190=1000 ; Velocity time units of minutes
+I6804=1 ; minimize pwm deadtime to make the pwm linear
+I8=0 ; Run PLCC 0 every servo cycle
+;p900
+;scale factor is (3/Ix08*32)*1000/gear ratio
+;ScaleFactor=(3/(I108*32))*(1000/m191)
+// Set system constant
+// Note: You may want to put this next statement in a power-on
+// PLC program to ensure that it is set properly every time
+// Set system constant
+// Note: You may want to put this next statement in a power-on
+// PLC program to ensure that it is set properly every time
+ScaleFactor=0.0000039050 ; Pre-compute this
+;0.00269768646408839779005524861878
+;0.00048828125
+// Program to execute function
+OPEN PLCC 0 CLEAR			; Foreground compiled PLC
+
+
+M_VecCmdVel =SQRT((M_Mtr1CmdVel/ m191 *M_Mtr1CmdVel/ m191) + M_Mtr2CmdVel / M292* M_Mtr2CmdVel / M292)*M_Override * 3/(I108*32) * 1000  ; calculate vector velocity
+
+
+M_Override=M_CS1TimeBase/ServoIntTime
+
+
+
+IF (LASER_ON=0)		; if laser bit is off turn pwm to 0% duty	
+;	PWMOutput=-1940 ;
+PWMOutput=-8960
+ELSE	
+PWMOutput=(i6800*M_MinLevel/50)+(((((DesiredDutyCycle+MB_Program_Laser_Power_High-M_MinLevel+MB_Program_Laser_Power_Low)*( M_VecCmdVel /I5189))/50)-1)*I6800)  ;calculate pwm output based on vector speed and min max laser levels
+ENDIF
+
+CLOSE
+
+ 

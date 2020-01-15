@@ -1,0 +1,148 @@
+#include<header.h>
+; Delphi Laser Drilling Machine
+; Config for homing and Machine Specific settings
+;DEFINE TBUF 4
+; Set up gear ratio co-ordinate system
+&1#1->2000X ; leadscrew 2 mm pitch - motor 4000 cts per rev = 2000 cts per mm
+&1#2->2000Y ; leadscrew 2 mm pitch - motor 4000 cts per rev = 2000 cts per mm
+&1#4->2000Z ; leadscrew 2 mm pitch - motor 4000 cts per rev = 2000 cts per mm
+
+; Jog speeds for DIagnostics
+P_HANDHELD_SPEED_HI_X = 20
+P_HANDHELD_SPEED_HI_Y1 = 20
+P_HANDHELD_SPEED_LO_X = 3
+P_HANDHELD_SPEED_LO_Y1 = 3
+P_HANDHELD_SPEED_LO_Z = 3
+P_HANDHELD_SPEED_HI_Z = 20
+P_HANDHELD_INCREMENT = .01
+
+P_MOTOR1_JOG_SPEED = 120
+P_MOTOR2_JOG_SPEED = 120
+P_MOTOR3_JOG_SPEED = 120
+P_MOTOR4_JOG_SPEED = 120
+
+Max_Feedrate = 1270  ;max feedrate 50 insec (1270mm/s)
+I5178;400 ;  Max Circ Acel
+; Home Offset after Final Homing in 1/16th of a count. THis is used to square the bridge. It also homes out of the switch so that we can use the home switches as a Limit switch
+
+P_MOTOR1_HOME_OFFSET = 16000 ;-1268200 ; 1mm home offset
+P_MOTOR2_HOME_OFFSET =  16000;600 ; 1mm home offset
+P_MOTOR3_HOME_OFFSET =  0 ; 448200 ;474300;469500;458100;454900 ; 1mm home offset
+P_MOTOR4_HOME_OFFSET =  16000  ; 1mm home offset
+
+
+; This is the Initial homing Speed Encoder Counts/mS
+
+P_MOTOR_1_HOME_SPEED = 20
+P_MOTOR_2_HOME_SPEED = 20
+P_MOTOR_3_HOME_SPEED = 15
+P_MOTOR_4_HOME_SPEED = 20
+
+
+; This is the Positive and Negative (Minus) Software limits in the controller in Encoder Counts usually 1000ct/mm
+
+P_MOTOR_1_SOFT_PLIM = 231576 ; Positve X Limit
+P_MOTOR_1_SOFT_MLIM = -400	
+P_MOTOR_2_SOFT_PLIM = 201300 ; Positve Y Limit
+P_MOTOR_2_SOFT_MLIM = -400	
+P_MOTOR_3_SOFT_PLIM = 0;12000
+P_MOTOR_3_SOFT_MLIM = 0;-27600
+P_MOTOR_4_SOFT_PLIM = 111770 ; Disabled
+P_MOTOR_4_SOFT_MLIM = -400 ; Disabled
+
+;P_MOTOR_1_DIRECTION_CONTROL = 0
+;P_MOTOR_2_DIRECTION_CONTROL = 1
+;P_MOTOR_3_DIRECTION_CONTROL = 0
+;P_MOTOR_4_DIRECTION_CONTROL = 1
+
+;P_MOTOR_1_ENCODER_DIRECTION = 7
+;P_MOTOR_2_ENCODER_DIRECTION = 3
+;P_MOTOR_3_ENCODER_DIRECTION = 7
+;P_MOTOR_4_ENCODER_DIRECTION = 8
+
+P_MOTOR_1_FLAG_CONTROL_ENABLE = $208001	;enable limits for motor1 AND ENABLE AMP FAULT, kill all motors on fault
+P_MOTOR_1_FLAG_CONTROL_DISABLE = $528001	;disable limits for motor1 AND ENABLE AMP FAULT, kill all motors on fault
+P_MOTOR_2_FLAG_CONTROL_ENABLE = $208001	;enable limits for motor1 AND ENABLE AMP FAULT, kill all motors on fault
+P_MOTOR_2_FLAG_CONTROL_DISABLE = $528001	;disable limits for motor1 AND ENABLE AMP FAULT, kill all motors on fault
+P_MOTOR_3_FLAG_CONTROL_ENABLE = $208001	;enable limits for motor1 AND ENABLE AMP FAULT, kill all motors on fault
+P_MOTOR_3_FLAG_CONTROL_DISABLE = $128001	;disable limits for motor1 AND ENABLE AMP FAULT, kill all motors on fault
+P_MOTOR_4_FLAG_CONTROL_ENABLE = $208001 ; Kill all motors on AMP FAULT , Diable Limits
+P_MOTOR_4_FLAG_CONTROL_DISABLE = $528001  ;Kill all motors on AMP FAULT , Diable Limits
+
+
+
+
+;Bit 14: Continue on Desired Position Limit Bit: If bit 14 is set to zero when desired position limits are
+;enabled (bit 15=1), and desired position within the lookahead buffer exceeds a position limit, Turbo
+;PMAC will stop execution of the program at the point where the motor reaches the limit.
+;If bit 14 (value $4000, or 16,384) is set to one when desired position limits are enabled (bit 15=1) (e.g.
+;I224=$C000) and desired position within the lookahead buffer exceeds a position limit, Turbo PMAC
+;will continue execution of the program past the point where the motor reaches the limit, but will not let
+;the desired motor position exceed the limit.
+;Bit 15: Desired Position Limit Enable Bit: If bit 15 is set to zero, Turbo PMAC does not check to see
+;whether the desired position for this motor exceeds software overtravel limits.
+;If bit 15 (value $8000, or 32,768) is set to one (e.g. I324=$8001), Turbo PMAC will check desired
+;position values for this motor against the software overtravel limits as set by Ixx13, Ixx14, and Ixx41.
+;If inside the special lookahead buffer, Turbo PMAC will either come to a controlled stop along the path at
+;the point where the desired position reaches the limit, or continue the program with desired position
+;saturated at the limit, depending on the setting of bit 14. If not inside the special lookahead buffer, Turbo
+;PMAC will issue an Abort command when it sees that the desired position has exceeded a position limit.
+;Bit 16: Amplifier Enable Use Bit: With bit 16 equal to zero – the normal case – the AENAn output is
+;used as an amplifier-enable line: off when the motor is “killed”, on when it is enabled.
+;If bit 16 (value $10000, or 65,536) is set to one (e.g. I1924=$10001), this output is not used as an
+;amplifier-enable line. On PMAC-style channels, it could then be used as a direction output for magnitude
+;and direction command format if Ixx96 is set to 1. In addition, by assigning an M-variable to the AENAn
+;output bit, general-purpose use of this output is possible on either Turbo PMAC or PMAC2 if this bit is
+;set.
+;Bit 17: Overtravel Limit Use Bit: With bit 17 equal to zero – the normal case – the two hardware
+;overtravel limit inputs must read 0 (drawing current) to permit commanded motion in the appropriate
+;direction. If there are not actual (normally closed or normally conducting) limit switches, the inputs must
+;be hardwired to ground.
+;Turbo PMAC/PMAC2 Software Reference
+;Turbo PMAC Global I-Variables 83
+;If bit 17 (value $20000, or 131,072) is set to one (e.g. I1924=$20000), Motor xx does not use these inputs
+;as overtravel limits. This can be done temporarily, as when using a limit as a homing flag. If the
+;hardware overtravel limit function is not used at all, these inputs can be used as general-purpose inputs by
+;assigning M-variables to them.
+;Bits 18 and 19: MACRO Node Use Bits: Bits 18 (value $40000, or 262,144) and 19 (value ($80000, or
+;524,288) of Ixx24 specify what flag information is connected directly to Turbo PMAC hardware
+;channels, and what information comes through the MACRO ring into a MACRO auxiliary register. The
+;following table shows the possible settings of these two bits and what they specify:
+;Bit 19 Bit 18 Capture Flags Amp Flags Limit Flags
+;0 0 Direct Direct (don’t care)
+;0 1 Thru MACRO Thru MACRO (don’t care)
+;1 0 Direct Thru MACRO (don’t care)
+;1 1 Thru MACRO Direct (don’t care)
+;If the amplifier flags are connected through the MACRO ring, bit 23 of Ixx24 must be set to 1 to
+;designate a high-true amplifier fault, which is the MACRO standard. When using a MACRO auxiliary
+;register for the flags, Ixx25, Ixx42, or Ixx43 should contain the address of a holding register in RAM, not
+;the actual MACRO register. Refer to the descriptions of those variables for a list of the holding register
+;addresses. Turbo PMAC firmware automatically copies between the holding registers and the MACRO
+;registers as enabled by I70, I72, I74 and I76, for MACRO ICs 0, 1, 2, and 3, respectively. I71, I73, I75,
+;and I77 must be set properly to determine whether the Type 0 or Type 1 MACRO protocol is being used
+;on the particular node (all Delta Tau products use Type 1).
+;Bit 20: Amplifier Fault Use Bit: If bit 20 of Ixx24 is 0, the amplifier-fault input function through the
+;FAULTn input is enabled. If bit 20 (value $100000, or 1,048,576) is 1 (e.g. I1924=$100000), this
+;function is disabled. General-purpose use of this input is then possible by assigning an M-variable to the
+;input.
+;Bits 21 & 22: Action-on-Fault Bits: Bits 21 (value $200000, or 2,097,152) and 22 (value $400000, or
+;4,194,304) of Ixx24 control what action is taken on an amplifier fault for the motor, or on exceeding the
+;fatal following error limit (as set by Ixx11) for the motor:
+;Bit 22 Bit 21 Function
+;Bit 22=0 Bit 21=0: Kill all PMAC motors
+;Bit 22=0 Bit 21=1: Kill all motors in same coordinate system
+;Bit 22=1 Bit 21=0: Kill only this motor
+;Bit 22=1 Bit 21=1: (Reserved for future use)
+;Regardless of the setting of these bits, a program running in the coordinate system of the offending motor
+;will be halted on an amplifier fault or the exceeding of a fatal following error.
+;Bit 23: Amplifier-Fault Polarity Bit: Bit 23 (value $800000, or 8,388,608) of Ixx24 controls the
+;polarity of the amplifier-fault input. A zero in this bit specifies that a zero read in the fault bit means a
+;fault; a one in this bit specifies that a one read in the fault bit means a fault. The actual state of the input
+;circuitry for a fault depends on the actual interface circuitry used. If a Delta Tau-provided optically
+;isolated fault interface is used, when the fault driver from the amplifier is drawing current through the
+;isolator, either sinking or sourcing, the fault bit will read as zero; when it is not drawing current through
+;the isolator, the fault bit will read as one.
+;In both the standard direct-PWM interface and the standard MACRO interface, bit 23 should be set to
+;one, to specify that a one in the fault bit means a fault. (The actual polarity of the signal into the remote
+;MACRO Station is programmable at the station).
+;Bit 23 is only used if bit 20 of Ixx24 is set to 0, telling Turbo PMAC to use the amplifier fault input.

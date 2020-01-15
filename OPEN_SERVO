@@ -1,0 +1,15 @@
+#include <header.h>
+
+
+; Open Servo to Calulate the distance traveled in the X and Y
+
+DEL GAT
+OPEN SERVO CLEAR
+X_Distance_Traveled=(Mtr1PrevDesPos-Mtr1DesPos) ; x distance traveled
+Y_Distance_Traveled=(Mtr2PrevDesPos-Mtr2DesPos) ;y distance traveled
+TraveledDistance=SQRT(X_Distance_Traveled*X_Distance_Traveled+Y_Distance_Traveled*Y_Distance_Traveled)/96*(LASER_PULSING_SCALE_FACTOR*4) 
+;total distance travled in x and y
+Mtr1PrevDesPos=Mtr1DesPos;store value for next calculation
+Mtr2PrevDesPos=Mtr2DesPos ;store value for next calculation
+CLOSE
+;I3259=1 ; enable open servo on motor 32

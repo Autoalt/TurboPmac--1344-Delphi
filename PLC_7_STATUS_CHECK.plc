@@ -1,0 +1,90 @@
+#include<header.h>
+
+
+
+OPEN PLC 7 CLEAR
+
+;This PLC is to check status of motors (Following Error)...
+
+
+IF (MB_CMD_Pulse_Laser_Start=1)
+	PLC_Laser_Control_Flag=1
+	CMD"enable plc2"
+ELSE
+	PLC_Laser_Control_Flag=0
+ENDIF		
+
+IF (MB_CMD_Jog_Enable_Bit=1) and (PLC_Jog_Control_Flag=0)
+	PLC_Jog_Control_Flag=1
+	CMD"enable plc5"
+ENDIF
+IF (MB_CMD_Jog_Enable_Bit=0) and (PLC_Jog_Control_Flag=1)
+	CMD"disable plc5"
+	I122 = P_MOTOR1_JOG_SPEED  ; RESET JOG SPEEDS
+	I222 = P_MOTOR2_JOG_SPEED
+	I422 = P_MOTOR4_JOG_SPEED
+	PLC_Jog_Control_Flag=0
+ENDIF
+
+
+;Motor 1 Error Checking
+IF (Motor1_LimitFault=1)  OR (Motor1_FollowError=1) OR (Motor1_AmpFault=1)
+MB_Motor1Fault=1
+MB_STATUS_ErrorFlag=1
+ENDIF
+
+;Motor 2 Error Checking
+IF (Motor2_LimitFault=1)  OR (Motor2_FollowError=1) OR (Motor2_AmpFault=1)
+MB_Motor2Fault=1
+MB_STATUS_ErrorFlag=1
+ENDIF
+
+;Motor 3 Error Checking
+IF (Motor3_LimitFault=1)  OR (Motor3_FollowError=1) OR (Motor3_AmpFault=1)
+MB_Motor3Fault=1
+MB_STATUS_ErrorFlag=1
+ENDIF
+
+;Motor 4 Error Checking
+IF (Motor4_LimitFault=1)  OR (Motor4_FollowError=1) OR (Motor4_AmpFault=1)
+MB_Motor4Fault=1
+MB_STATUS_ErrorFlag=1
+ENDIF 
+
+; Laser Ready
+;Set error if Laser not READY
+IF (LASER_READY = 1)
+	MB_LaserFault = 1
+	MB_STATUS_ErrorFlag=1
+	M54=0
+ENDIF
+	
+IF (MB_Motor1Fault=1)OR (MB_Motor2Fault=1)OR (MB_Motor2Fault=1) OR (MB_Motor4Fault=1)OR (MB_LaserFault = 1)
+MB_STATUS_LaserReady=0
+M54=0
+ENDIF
+
+	
+
+
+; Calculate Motor Positions in mm and separate into INT and DEC * 10000
+P_Motor_1_Pos_mm = ENC1 /(96*32)/ M191; 2000
+P_Motor_1_Pos_int = INT(P_Motor_1_Pos_mm)
+MB_Motor1_Pos_INT = P_Motor_1_Pos_int
+P_Motor_1_Pos_dec = ( P_Motor_1_Pos_mm - P_Motor_1_Pos_int) * 10000
+MB_Motor1_Pos_DEC = P_Motor_1_Pos_dec
+
+P_Motor_2_Pos_mm = ENC2 /(96*32)/ M292 ;2000
+P_Motor_2_Pos_int = INT(P_Motor_2_Pos_mm)
+MB_Motor2_Pos_INT = P_Motor_2_Pos_int
+P_Motor_2_Pos_dec = ( P_Motor_2_Pos_mm - P_Motor_2_Pos_int) * 10000
+MB_Motor2_Pos_DEC = P_Motor_2_Pos_dec
+
+P_Motor_4_Pos_mm = ENC4 /(96*32)/ 2000
+P_Motor_4_Pos_int = INT(P_Motor_4_Pos_mm)
+MB_Motor4_Pos_INT = P_Motor_4_Pos_int
+P_Motor_4_Pos_dec = ( P_Motor_4_Pos_mm - P_Motor_4_Pos_int) * 10000
+MB_Motor4_Pos_DEC = P_Motor_4_Pos_dec
+
+
+CLOSE
